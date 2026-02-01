@@ -60,8 +60,8 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 			Price: product.Price,
 			Stock: product.Stock,
 		}
-		if len(product.Category) > 0 {
-			cat := product.Category[0]
+		if product.Category != nil {
+			cat := product.Category
 			item.Category = &categoryResponse{
 				Name:        cat.Name,
 				Description: cat.Description,
@@ -88,9 +88,38 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type categoryResponse struct {
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+
+	type productResponse struct {
+		ID       int               `json:"id"`
+		Name     string            `json:"name"`
+		Price    int               `json:"price"`
+		Stock    int               `json:"stock"`
+		Category *categoryResponse `json:"category,omitempty"`
+	}
+
+	response := productResponse{
+		ID:    product.ID,
+		Name:  product.Name,
+		Price: product.Price,
+		Stock: product.Stock,
+	}
+	if product.Category != nil {
+		cat := product.Category
+		response.Category = &categoryResponse{
+			ID:          cat.ID,
+			Name:        cat.Name,
+			Description: cat.Description,
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(product)
+	json.NewEncoder(w).Encode(response)
 }
 
 // HandleProductByID menangani request produk berdasarkan ID.
@@ -126,8 +155,37 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type categoryResponse struct {
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+
+	type productResponse struct {
+		ID       int               `json:"id"`
+		Name     string            `json:"name"`
+		Price    int               `json:"price"`
+		Stock    int               `json:"stock"`
+		Category *categoryResponse `json:"category,omitempty"`
+	}
+
+	response := productResponse{
+		ID:    product.ID,
+		Name:  product.Name,
+		Price: product.Price,
+		Stock: product.Stock,
+	}
+	if product.Category != nil {
+		cat := product.Category
+		response.Category = &categoryResponse{
+			ID:          cat.ID,
+			Name:        cat.Name,
+			Description: cat.Description,
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(product)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -138,11 +196,39 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type categoryResponse struct {
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+
+	type productResponse struct {
+		ID       int               `json:"id"`
+		Name     string            `json:"name"`
+		Price    int               `json:"price"`
+		Stock    int               `json:"stock"`
+		Category *categoryResponse `json:"category,omitempty"`
+	}
+
 	var product models.Product
+
 	err = json.NewDecoder(r.Body).Decode(&product)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
+	}
+
+	if product.CategoryID == 0 {
+		if product.Category != nil && product.Category.ID != 0 {
+			product.CategoryID = product.Category.ID
+		} else {
+			existingProduct, err := h.service.GetByID(id)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			product.CategoryID = existingProduct.CategoryID
+		}
 	}
 
 	product.ID = id
@@ -151,9 +237,30 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	updatedProduct, err := h.service.GetByID(product.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := productResponse{
+		ID:    updatedProduct.ID,
+		Name:  updatedProduct.Name,
+		Price: updatedProduct.Price,
+		Stock: updatedProduct.Stock,
+	}
+
+	if updatedProduct.Category != nil {
+		cat := updatedProduct.Category
+		response.Category = &categoryResponse{
+			ID:          cat.ID,
+			Name:        cat.Name,
+			Description: cat.Description,
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(product)
+	json.NewEncoder(w).Encode(response)
 }
 
 // Delete menghapus produk berdasarkan ID.

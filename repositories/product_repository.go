@@ -35,7 +35,9 @@ func (repo *ProductRepository) GetAll() ([]models.Product, error) {
 		if err != nil {
 			return nil, err
 		}
-		p.Category = append(p.Category, c)
+		if c.Name != "" || c.Description != "" {
+			p.Category = &c
+		}
 		products = append(products, p)
 	}
 
@@ -53,7 +55,7 @@ func (repo *ProductRepository) Create(product *models.Product) error {
 	if err := repo.db.QueryRow(categoryQuery, product.CategoryID).Scan(&c.ID, &c.Name, &c.Description); err != nil {
 		return err
 	}
-	product.Category = []models.Category{c}
+	product.Category = &c
 	return nil
 }
 
@@ -68,6 +70,7 @@ func (repo *ProductRepository) GetByID(id int) (*models.Product, error) {
 
 	var p models.Product
 	var c models.Category
+
 	err := repo.db.QueryRow(query, id).Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &p.CategoryID, &c.ID, &c.Name, &c.Description)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("produk tidak ditemukan")
@@ -76,7 +79,7 @@ func (repo *ProductRepository) GetByID(id int) (*models.Product, error) {
 		return nil, err
 	}
 	if c.Name != "" || c.Description != "" {
-		p.Category = []models.Category{c}
+		p.Category = &c
 	}
 
 	return &p, nil
