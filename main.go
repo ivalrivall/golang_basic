@@ -1,39 +1,38 @@
-// Package main implements a comprehensive REST API for a cashier system using Go's standard library.
-// This implementation demonstrates building a full-featured web API with CRUD operations for both products and categories.
-// All data is stored in memory using Go slices, making it suitable for learning and development purposes.
-// In a production environment, this would be replaced with a proper database system.
+// Package main mengimplementasikan REST API sederhana untuk sistem kasir.
+// Aplikasi ini menyediakan operasi CRUD untuk produk dan kategori menggunakan
+// database PostgreSQL sebagai penyimpanan data.
 //
-// Key Features:
-//   - RESTful API design following standard HTTP methods
-//   - JSON-based request/response handling
-//   - URL path parameter extraction for resource-specific operations
-//   - Proper HTTP status codes and error responses
-//   - In-memory data persistence (not suitable for production)
+// Fitur Utama:
+//   - Desain RESTful menggunakan metode HTTP standar
+//   - Request/response berbasis JSON
+//   - Pengambilan parameter ID dari URL
+//   - Status code dan error response yang sesuai
+//   - Integrasi PostgreSQL untuk persistensi data
 //
-// API Endpoints:
+// Endpoint API:
 //
 // Health Check:
-//   - GET /health - Returns API status and basic information
+//   - GET /health - Mengembalikan status dasar API
 //
-// Product Management (/api/produk):
-//   - GET /api/produk - Retrieve all products from inventory
-//   - POST /api/produk - Create a new product with auto-incremented ID
-//   - GET /api/produk/{id} - Retrieve a specific product by its ID
-//   - PUT /api/produk/{id} - Update an existing product's information
-//   - DELETE /api/produk/{id} - Remove a product from inventory
+// Manajemen Produk (/api/product):
+//   - GET /api/product - Ambil semua produk
+//   - POST /api/product - Buat produk baru (ID otomatis)
+//   - GET /api/product/{id} - Ambil produk berdasarkan ID
+//   - PUT /api/product/{id} - Perbarui produk berdasarkan ID
+//   - DELETE /api/product/{id} - Hapus produk berdasarkan ID
 //
-// Category Management (/api/categories):
-//   - GET /api/categories - Retrieve all product categories
-//   - POST /api/categories - Create a new category with auto-incremented ID
-//   - GET /api/categories/{id} - Retrieve a specific category by its ID
-//   - PUT /api/categories/{id} - Update an existing category's information
-//   - DELETE /api/categories/{id} - Remove a category from the system
+// Manajemen Kategori (/api/categories):
+//   - GET /api/categories - Ambil semua kategori
+//   - POST /api/categories - Buat kategori baru (ID otomatis)
+//   - GET /api/categories/{id} - Ambil kategori berdasarkan ID
+//   - PUT /api/categories/{id} - Perbarui kategori berdasarkan ID
+//   - DELETE /api/categories/{id} - Hapus kategori berdasarkan ID
 //
-// Usage Example:
+// Contoh penggunaan:
 //
-//	Start the server: go run main.go
-//	Server listens on http://localhost:8080
-//	Use tools like curl, Postman, or browser to test endpoints
+//	Jalankan server: go run main.go
+//	Server listen di http://localhost:8080
+//	Gunakan curl, Postman, atau browser untuk menguji endpoint
 package main
 
 import (
@@ -56,16 +55,16 @@ type Config struct {
 	DBConn string `mapstructure:"DB_CONN"`
 }
 
-// main initializes the HTTP server and sets up all API routes.
-// This function is the entry point of the application and configures:
-//   - Health check endpoint for monitoring
-//   - Product management endpoints (CRUD operations)
-//   - Category management endpoints (CRUD operations)
-//   - HTTP server listening on port 8080
+// main menginisialisasi HTTP server dan menyiapkan seluruh routing API.
+// Fungsi ini menjadi entry point aplikasi dan mengonfigurasi:
+//   - Endpoint health check untuk monitoring
+//   - Endpoint manajemen produk (CRUD)
+//   - Endpoint manajemen kategori (CRUD)
+//   - HTTP server yang berjalan pada port 8080
 //
-// The routing uses Go's built-in http.ServeMux for pattern matching.
-// Routes with trailing slashes handle ID-specific operations, while routes
-// without slashes handle collection-level operations (list/create).
+// Routing menggunakan http.ServeMux bawaan Go.
+// Route dengan trailing slash menangani operasi berbasis ID, sedangkan
+// route tanpa slash menangani operasi koleksi (list/create).
 
 func main() {
 	viper.AutomaticEnv()
@@ -98,13 +97,13 @@ func main() {
 	http.HandleFunc("/api/product", productHandler.HandleProducts)
 	http.HandleFunc("/api/product/", productHandler.HandleProductByID)
 
-	// Category routes with ID parameter - handles GET/PUT/DELETE for specific categories
-	// Pattern: /api/categories/{id} - matches URLs like /api/categories/1, /api/categories/2
+	// Route kategori berbasis ID - menangani GET/PUT/DELETE kategori tertentu
+	// Pola: /api/categories/{id} - contoh /api/categories/1
 	http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
 	http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
 
-	// Health check endpoint - returns basic API status
-	// Usage: GET http://localhost:8080/health
+	// Endpoint health check - mengembalikan status dasar API
+	// Contoh: GET http://localhost:8080/health
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
@@ -113,8 +112,8 @@ func main() {
 		})
 	})
 
-	// Start HTTP server on port 8080
-	// This is a blocking call that runs indefinitely until interrupted
+	// Menjalankan HTTP server pada port 8080
+	// Pemanggilan ini bersifat blocking sampai proses dihentikan
 	addr := "0.0.0.0:" + config.Port
 	fmt.Println("Server running di", addr)
 

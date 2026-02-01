@@ -17,7 +17,10 @@ func NewProductHandler(service *services.ProductService) *ProductHandler {
 	return &ProductHandler{service: service}
 }
 
-// HandleProducts - GET /api/product
+// HandleProducts menangani request collection produk.
+// Endpoint:
+//   - GET /api/product (ambil semua produk)
+//   - POST /api/product (buat produk baru)
 func (h *ProductHandler) HandleProducts(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -59,7 +62,11 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
-// HandleProductByID - GET/PUT/DELETE /api/product/{id}
+// HandleProductByID menangani request produk berdasarkan ID.
+// Endpoint:
+//   - GET /api/product/{id}
+//   - PUT /api/product/{id}
+//   - DELETE /api/product/{id}
 func (h *ProductHandler) HandleProductByID(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -73,7 +80,7 @@ func (h *ProductHandler) HandleProductByID(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// GetByID - GET /api/product/{id}
+// GetByID mengambil produk berdasarkan ID.
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/product/")
 	id, err := strconv.Atoi(idStr)
@@ -118,7 +125,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
-// Delete - DELETE /api/product/{id}
+// Delete menghapus produk berdasarkan ID.
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/product/")
 	id, err := strconv.Atoi(idStr)

@@ -8,19 +8,19 @@ import (
 )
 
 func InitDB(connectionString string) (*sql.DB, error) {
-	// Open database
+	// Membuka koneksi database
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		return nil, err
 	}
 
-	// Test connection
+	// Menguji koneksi
 	err = db.Ping()
 	if err != nil {
 		return nil, err
 	}
 
-	// Set connection pool settings (optional tapi recommended)
+	// Konfigurasi connection pool (opsional tapi direkomendasikan)
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(5)
 

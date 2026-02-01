@@ -41,7 +41,7 @@ func (repo *ProductRepository) Create(product *models.Product) error {
 	return err
 }
 
-// GetByID - ambil produk by ID
+// GetByID mengambil produk berdasarkan ID.
 func (repo *ProductRepository) GetByID(id int) (*models.Product, error) {
 	query := "SELECT id, name, price, stock FROM products WHERE id = $1"
 

@@ -41,7 +41,7 @@ func (repo *CategoryRepository) Create(category *models.Category) error {
 	return err
 }
 
-// GetByID - ambil kategori by ID
+// GetByID mengambil kategori berdasarkan ID.
 func (repo *CategoryRepository) GetByID(id int) (*models.Category, error) {
 	query := "SELECT id, name, description FROM categories WHERE id = $1"
 
