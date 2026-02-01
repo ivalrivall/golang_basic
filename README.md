@@ -3,13 +3,18 @@
 [![Go Version](https://img.shields.io/badge/Go-1.16+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-This repository contains a REST API implementation for a cashier system built with Go. It demonstrates building CRUD operations for managing products and categories using Go's standard HTTP package with in-memory storage. Perfect for learning Go web development and REST API design patterns.
+This repository contains a REST API implementation for a cashier system built with Go. It demonstrates building CRUD operations for managing products and categories using Go's standard HTTP package with a PostgreSQL database. Perfect for learning Go web development and REST API design patterns.
 
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Running the Code](#running-the-code)
+- [Configuration](#configuration)
+- [Database Setup](#database-setup)
+- [API Endpoints](#api-endpoints)
+- [Request/Response Examples](#requestresponse-examples)
+- [Data Models](#data-models)
 - [Topics Covered](#topics-covered)
 - [Learning Resources](#learning-resources)
 - [Next Steps](#next-steps)
@@ -36,21 +41,47 @@ To run the main program:
 go run main.go
 ```
 
-## Topics Covered
+## Configuration
 
-The `main.go` file implements a REST API with the following features:
+Create a `.env` file in the project root:
 
-### API Endpoints
+```bash
+PORT=8080
+DB_CONN=postgresql://<user>:<password>@<host>:5432/<database>
+```
+
+The application loads environment variables using `viper`. If `.env` exists, it will be read automatically.
+
+## Database Setup
+
+This API expects two tables: `products` and `categories`. Example schema (PostgreSQL):
+
+```sql
+CREATE TABLE IF NOT EXISTS products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price INT NOT NULL,
+  stock INT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL
+);
+```
+
+## API Endpoints
 
 **Health Check:**
 - `GET /health` - API health check endpoint
 
 **Product Management:**
-- `GET /api/produk` - Retrieve all products
-- `POST /api/produk` - Create a new product
-- `GET /api/produk/{id}` - Retrieve a product by ID
-- `PUT /api/produk/{id}` - Update a product by ID
-- `DELETE /api/produk/{id}` - Delete a product by ID
+- `GET /api/product` - Retrieve all products
+- `POST /api/product` - Create a new product
+- `GET /api/product/{id}` - Retrieve a product by ID
+- `PUT /api/product/{id}` - Update a product by ID
+- `DELETE /api/product/{id}` - Delete a product by ID
 
 **Category Management:**
 - `GET /api/categories` - Retrieve all categories
@@ -59,13 +90,104 @@ The `main.go` file implements a REST API with the following features:
 - `PUT /api/categories/{id}` - Update a category by ID
 - `DELETE /api/categories/{id}` - Delete a category by ID
 
+## Request/Response Examples
+
+### Health Check
+
+```bash
+curl http://localhost:8080/health
+```
+
+```json
+{
+  "status": "OK",
+  "message": "API Running"
+}
+```
+
+### Create Product
+
+```bash
+curl -X POST http://localhost:8080/api/product \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Rice","price":12000,"stock":50}'
+```
+
+```json
+{
+  "id": 1,
+  "name": "Rice",
+  "price": 12000,
+  "stock": 50
+}
+```
+
+### Get Product By ID
+
+```bash
+curl http://localhost:8080/api/product/1
+```
+
+```json
+{
+  "id": 1,
+  "name": "Rice",
+  "price": 12000,
+  "stock": 50
+}
+```
+
+### Create Category
+
+```bash
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Groceries","description":"Daily needs"}'
+```
+
+```json
+{
+  "id": 1,
+  "name": "Groceries",
+  "description": "Daily needs"
+}
+```
+
+## Data Models
+
+### Product
+
+```json
+{
+  "id": 1,
+  "name": "string",
+  "price": 12000,
+  "stock": 50
+}
+```
+
+### Category
+
+```json
+{
+  "id": 1,
+  "name": "string",
+  "description": "string"
+}
+```
+
+## Topics Covered
+
+The `main.go` file implements a REST API with the following features:
+
 ### Technical Concepts
 
 - Struct definitions with JSON tags
 - HTTP routing with Go's net/http package
 - JSON encoding/decoding
 - URL path parsing and parameter extraction
-- In-memory data storage with slices
+- Repository/service layering
+- PostgreSQL persistence with `database/sql`
 - CRUD operations implementation
 - Error handling and HTTP status codes
 
