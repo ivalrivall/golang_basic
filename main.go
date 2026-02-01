@@ -114,11 +114,10 @@ func main() {
 
 	// Menjalankan HTTP server pada port 8080
 	// Pemanggilan ini bersifat blocking sampai proses dihentikan
-	addr := "0.0.0.0:" + config.Port
-	fmt.Println("Server running di", addr)
+	fmt.Println("Server running di localhost:" + config.Port)
 
-	err = http.ListenAndServe(addr, nil)
+	err = http.ListenAndServe(":"+config.Port, nil)
 	if err != nil {
-		fmt.Println("Gagal running server")
+		fmt.Println("gagal running server")
 	}
 }
