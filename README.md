@@ -41,6 +41,20 @@ To run the main program:
 go run main.go
 ```
 
+### Hot Reload (Air)
+
+Install Air (if you don't have it yet):
+
+```bash
+go install github.com/air-verse/air@latest
+```
+
+Run the API with hot reloading:
+
+```bash
+air
+```
+
 ## Configuration
 
 Create a `.env` file in the project root:

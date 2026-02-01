@@ -39,8 +39,39 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type categoryResponse struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+
+	type productResponse struct {
+		ID       int               `json:"id"`
+		Name     string            `json:"name"`
+		Price    int               `json:"price"`
+		Stock    int               `json:"stock"`
+		Category *categoryResponse `json:"category,omitempty"`
+	}
+
+	responses := make([]productResponse, 0, len(products))
+	for _, product := range products {
+		item := productResponse{
+			ID:    product.ID,
+			Name:  product.Name,
+			Price: product.Price,
+			Stock: product.Stock,
+		}
+		if len(product.Category) > 0 {
+			cat := product.Category[0]
+			item.Category = &categoryResponse{
+				Name:        cat.Name,
+				Description: cat.Description,
+			}
+		}
+		responses = append(responses, item)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
+	json.NewEncoder(w).Encode(responses)
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
