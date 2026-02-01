@@ -46,13 +46,22 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	Port   string `mapstructure:"PORT"`
-	DBConn string `mapstructure:"DB_CONN"`
+	Port            string `mapstructure:"PORT"`
+	DBUser          string `mapstructure:"DB_USER"`
+	DBPass          string `mapstructure:"DB_PASS"`
+	DBHost          string `mapstructure:"DB_HOST"`
+	DBPort          string `mapstructure:"DB_PORT"`
+	DBName          string `mapstructure:"DB_NAME"`
+	DBSSLMode       string `mapstructure:"DB_SSLMODE"`
+	DBMaxOpenConns  int    `mapstructure:"DB_MAX_OPEN_CONNS"`
+	DBMaxIdleConns  int    `mapstructure:"DB_MAX_IDLE_CONNS"`
+	DBConnMaxLifeMs int    `mapstructure:"DB_CONN_MAX_LIFETIME_MS"`
 }
 
 // main menginisialisasi HTTP server dan menyiapkan seluruh routing API.
@@ -76,11 +85,39 @@ func main() {
 	}
 
 	config := Config{
-		Port:   viper.GetString("PORT"),
-		DBConn: viper.GetString("DB_CONN"),
+		Port:            viper.GetString("PORT"),
+		DBUser:          strings.TrimSpace(viper.GetString("DB_USER")),
+		DBPass:          strings.TrimSpace(viper.GetString("DB_PASS")),
+		DBHost:          strings.TrimSpace(viper.GetString("DB_HOST")),
+		DBPort:          strings.TrimSpace(viper.GetString("DB_PORT")),
+		DBName:          strings.TrimSpace(viper.GetString("DB_NAME")),
+		DBSSLMode:       strings.TrimSpace(viper.GetString("DB_SSLMODE")),
+		DBMaxOpenConns:  viper.GetInt("DB_MAX_OPEN_CONNS"),
+		DBMaxIdleConns:  viper.GetInt("DB_MAX_IDLE_CONNS"),
+		DBConnMaxLifeMs: viper.GetInt("DB_CONN_MAX_LIFETIME_MS"),
 	}
 
-	db, err := database.InitDB(config.DBConn)
+	if config.DBSSLMode == "" {
+		config.DBSSLMode = "require"
+	}
+
+	dsn := fmt.Sprintf(
+		"postgresql://%s:%s@%s:%s/%s?sslmode=%s",
+		config.DBUser,
+		config.DBPass,
+		config.DBHost,
+		config.DBPort,
+		config.DBName,
+		config.DBSSLMode,
+	)
+
+	poolConfig := database.PoolConfig{
+		MaxOpenConns:    config.DBMaxOpenConns,
+		MaxIdleConns:    config.DBMaxIdleConns,
+		ConnMaxLifetime: time.Duration(config.DBConnMaxLifeMs) * time.Millisecond,
+	}
+
+	db, err := database.InitDB(dsn, poolConfig)
 	if err != nil {
 		log.Fatal("Failed to initialize database:", err)
 	}
@@ -118,6 +155,6 @@ func main() {
 
 	err = http.ListenAndServe(":"+config.Port, nil)
 	if err != nil {
-		fmt.Println("gagal running server")
+		fmt.Println("Failed running server:", err)
 	}
 }

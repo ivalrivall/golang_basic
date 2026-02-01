@@ -3,16 +3,30 @@ package database
 import (
 	"database/sql"
 	"log"
+	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 )
 
-func InitDB(connectionString string) (*sql.DB, error) {
-	// Membuka koneksi database
-	db, err := sql.Open("postgres", connectionString)
+type PoolConfig struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+}
+
+func InitDB(connectionString string, pool PoolConfig) (*sql.DB, error) {
+	// Membuat konfigurasi pgx dari connection string
+	config, err := pgx.ParseConfig(connectionString)
 	if err != nil {
 		return nil, err
 	}
+
+	// Supabase transaction pooler membutuhkan simple protocol
+	config.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+	// Membuka koneksi database melalui pgx stdlib
+	db := stdlib.OpenDB(*config)
 
 	// Menguji koneksi
 	err = db.Ping()
@@ -20,9 +34,16 @@ func InitDB(connectionString string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	// Konfigurasi connection pool (opsional tapi direkomendasikan)
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
+	// Konfigurasi connection pool (disesuaikan untuk Supabase transaction pooling)
+	if pool.MaxOpenConns > 0 {
+		db.SetMaxOpenConns(pool.MaxOpenConns)
+	}
+	if pool.MaxIdleConns > 0 {
+		db.SetMaxIdleConns(pool.MaxIdleConns)
+	}
+	if pool.ConnMaxLifetime > 0 {
+		db.SetConnMaxLifetime(pool.ConnMaxLifetime)
+	}
 
 	log.Println("Database connected successfully")
 	return db, nil
