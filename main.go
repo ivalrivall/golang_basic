@@ -164,6 +164,24 @@ func main() {
 		})
 	})
 
+	// Endpoint root - menyediakan URL download collection Postman
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"download_postman_url": "/BelajarGolang.postman_collection.json",
+		})
+	})
+
+	// Endpoint file collection Postman
+	http.HandleFunc("/BelajarGolang.postman_collection.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "BelajarGolang.postman_collection.json")
+	})
+
 	// Menjalankan HTTP server pada port 8080
 	// Pemanggilan ini bersifat blocking sampai proses dihentikan
 	fmt.Println("Server running di localhost:" + config.Port)
