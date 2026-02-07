@@ -1,154 +1,136 @@
 # Golang REST API - Cashier System
 
-[![Go Version](https://img.shields.io/badge/Go-1.16+-00ADD8?style=flat&logo=go)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-This repository contains a REST API implementation for a cashier system built with Go. It demonstrates building CRUD operations for managing products and categories using Go's standard HTTP package with a PostgreSQL database. Perfect for learning Go web development and REST API design patterns.
+REST API sistem kasir berbasis Go + PostgreSQL dengan arsitektur berlapis (handler → service → repository). Selain CRUD produk dan kategori, project ini sudah mendukung checkout transaksi multi-item dan endpoint laporan penjualan.
 
-## Table of Contents
+## Fitur
 
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Running the Code](#running-the-code)
-- [Configuration](#configuration)
-- [Database Setup](#database-setup)
-- [API Endpoints](#api-endpoints)
-- [Request/Response Examples](#requestresponse-examples)
-- [Data Models](#data-models)
-- [Topics Covered](#topics-covered)
-- [Learning Resources](#learning-resources)
-- [Next Steps](#next-steps)
+- Health check endpoint
+- CRUD Category
+- CRUD Product (dengan relasi category)
+- Filter product by name (`GET /api/product?name=...`)
+- Checkout transaksi multi item (`POST /api/checkout`)
+- Laporan transaksi harian (`GET /api/report/today`)
+- Laporan transaksi rentang tanggal (`GET /api/report?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`)
 
 ## Prerequisites
 
-- Go 1.16 or later installed on your system
-- Basic understanding of programming concepts
+- Go 1.25+ 
+- PostgreSQL
 
 ## Installation
-
-Clone the repository:
 
 ```bash
 git clone https://github.com/ivalrivall/golang_basic.git
 cd golang_basic
-```
-
-## Running the Code
-
-To run the main program:
-
-```bash
-go run main.go
-```
-
-### Hot Reload (Air)
-
-Install Air (if you don't have it yet):
-
-```bash
-go install github.com/air-verse/air@latest
-```
-
-Run the API with hot reloading:
-
-```bash
-air
+go mod tidy
 ```
 
 ## Configuration
 
-Create a `.env` file in the project root:
+Copy env template:
 
 ```bash
-PORT=8080
-DB_CONN=postgresql://<user>:<password>@<host>:5432/<database>
+cp .env.example .env
 ```
 
-The application loads environment variables using `viper`. If `.env` exists, it will be read automatically.
+Isi `.env` sesuai environment kamu:
 
-## Database Setup
+```env
+PORT=8080
+DB_USER=postgres
+DB_PASS=password123
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=postgres
+DB_SSLMODE=require
+DB_MAX_OPEN_CONNS=10
+DB_MAX_IDLE_CONNS=5
+DB_CONN_MAX_LIFETIME_MS=300000
+```
 
-This API expects two tables: `products` and `categories`. Example schema (PostgreSQL):
+## Database Setup (PostgreSQL)
+
+Contoh minimal schema:
 
 ```sql
-CREATE TABLE IF NOT EXISTS products (
-  id SERIAL PRIMARY KEY,
-  name TEXT NOT NULL,
-  price INT NOT NULL,
-  stock INT NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS categories (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price INT NOT NULL,
+  stock INT NOT NULL,
+  category_id INT REFERENCES categories(id)
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  total_amount INT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS transaction_details (
+  id SERIAL PRIMARY KEY,
+  transaction_id INT NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+  product_id INT NOT NULL REFERENCES products(id),
+  quantity INT NOT NULL,
+  subtotal INT NOT NULL
+);
+```
+
+## Running the API
+
+```bash
+go run main.go
+```
+
+Hot reload (opsional):
+
+```bash
+go install github.com/air-verse/air@latest
+air
 ```
 
 ## API Endpoints
 
-**Health Check:**
-- `GET /health` - API health check endpoint
+### Health
+- `GET /health`
 
-**Product Management:**
-- `GET /api/product` - Retrieve all products
-- `POST /api/product` - Create a new product
-- `GET /api/product/{id}` - Retrieve a product by ID
-- `PUT /api/product/{id}` - Update a product by ID
-- `DELETE /api/product/{id}` - Delete a product by ID
+### Categories
+- `GET /api/categories`
+- `POST /api/categories`
+- `GET /api/categories/{id}`
+- `PUT /api/categories/{id}`
+- `DELETE /api/categories/{id}`
 
-**Category Management:**
-- `GET /api/categories` - Retrieve all categories
-- `POST /api/categories` - Create a new category
-- `GET /api/categories/{id}` - Retrieve a category by ID
-- `PUT /api/categories/{id}` - Update a category by ID
-- `DELETE /api/categories/{id}` - Delete a category by ID
+### Products
+- `GET /api/product`
+- `GET /api/product?name=keyword`
+- `POST /api/product`
+- `GET /api/product/{id}`
+- `PUT /api/product/{id}`
+- `DELETE /api/product/{id}`
 
-## Request/Response Examples
+### Transactions
+- `POST /api/checkout`
+
+### Reports
+- `GET /api/report/today`
+- `GET /api/report?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+
+## Request Examples
 
 ### Health Check
 
 ```bash
 curl http://localhost:8080/health
-```
-
-```json
-{
-  "status": "OK",
-  "message": "API Running"
-}
-```
-
-### Create Product
-
-```bash
-curl -X POST http://localhost:8080/api/product \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Rice","price":12000,"stock":50}'
-```
-
-```json
-{
-  "id": 1,
-  "name": "Rice",
-  "price": 12000,
-  "stock": 50
-}
-```
-
-### Get Product By ID
-
-```bash
-curl http://localhost:8080/api/product/1
-```
-
-```json
-{
-  "id": 1,
-  "name": "Rice",
-  "price": 12000,
-  "stock": 50
-}
 ```
 
 ### Create Category
@@ -159,87 +141,48 @@ curl -X POST http://localhost:8080/api/categories \
   -d '{"name":"Groceries","description":"Daily needs"}'
 ```
 
-```json
-{
-  "id": 1,
-  "name": "Groceries",
-  "description": "Daily needs"
-}
+### Create Product
+
+```bash
+curl -X POST http://localhost:8080/api/product \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Rice","price":12000,"stock":50,"category_id":1}'
 ```
 
-## Data Models
+### Checkout
 
-### Product
-
-```json
-{
-  "id": 1,
-  "name": "string",
-  "price": 12000,
-  "stock": 50
-}
+```bash
+curl -X POST http://localhost:8080/api/checkout \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"product_id": 1, "quantity": 2},
+      {"product_id": 2, "quantity": 1}
+    ]
+  }'
 ```
 
-### Category
+### Report by Date Range
 
-```json
-{
-  "id": 1,
-  "name": "string",
-  "description": "string"
-}
+```bash
+curl "http://localhost:8080/api/report?start_date=2026-01-01&end_date=2026-01-31"
 ```
 
-## Topics Covered
+## Project Structure
 
-The `main.go` file implements a REST API with the following features:
+```text
+.
+├── main.go
+├── database/
+├── dto/
+├── handlers/
+├── models/
+├── repositories/
+└── services/
+```
 
-### Technical Concepts
+## Notes
 
-- Struct definitions with JSON tags
-- HTTP routing with Go's net/http package
-- JSON encoding/decoding
-- URL path parsing and parameter extraction
-- Repository/service layering
-- PostgreSQL persistence with `database/sql`
-- CRUD operations implementation
-- Error handling and HTTP status codes
-
-## Learning Resources
-
-### Tutorials
-- [Dasar Pemrograman Golang](https://dasarpemrogramangolang.novalagung.com/)
-- [Materi Pertemuan 1](https://docs.kodingworks.io/s/01e57b74-74e6-44df-ac02-7e30a2478528)
-
-### Video Tutorials
-- [Pertemuan 1: Introduction to Go](https://www.youtube.com/watch?v=HL1JU206V-4)
-
-### Tasks
-
-#### Pertemuan 1 Checklist
-
-**API Implementation Tasks:**
-- [x] Create Category model with ID, Name, Description fields
-- [x] Implement GET /categories endpoint (get all categories)
-- [x] Implement POST /categories endpoint (add new category)
-- [x] Implement PUT /categories/{id} endpoint (update category)
-- [x] Implement GET /categories/{id} endpoint (get category details)
-- [x] Implement DELETE /categories/{id} endpoint (delete category)
-- [x] Implement Product model with ID, Nama, Harga, Stok fields
-- [x] Implement GET /api/produk endpoint (get all products)
-- [x] Implement POST /api/produk endpoint (add new product)
-- [x] Implement PUT /api/produk/{id} endpoint (update product)
-- [x] Implement GET /api/produk/{id} endpoint (get product details)
-- [x] Implement DELETE /api/produk/{id} endpoint (delete product)
-- [x] Implement GET /health endpoint (health check)
-- [x] Use JSON encoding/decoding for request/response handling
-- [x] Handle HTTP methods (GET, POST, PUT, DELETE) appropriately
-- [x] Implement URL path parsing for ID-based operations
-- [x] Add proper HTTP status codes and error responses
-- [ ] Deploy API to cloud platform (Railway or Zeabur)
-- [ ] Submit project via form with email, GitHub link, and deployment link
-- [ ] Complete exercises: [Pertemuan 1](https://docs.kodingworks.io/s/17137b9a-ed7a-4950-ba9e-eb11299531c2)
-
-## Next Steps
-
-- Constants: https://dasarpemrogramangolang.novalagung.com/A-konstanta.html
+- Konfigurasi env dibaca menggunakan `viper`.
+- Driver PostgreSQL menggunakan `pgx/v5` lewat `database/sql` stdlib adapter.
+- `database.InitDB` menerapkan setting connection pool dari env.
