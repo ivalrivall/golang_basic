@@ -131,6 +131,14 @@ func main() {
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 
+	transactionRepo := repositories.NewTransactionRepository(db)
+	transactionService := services.NewTransactionService(transactionRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+
+	reportRepo := repositories.NewReportRepository(db)
+	reportService := services.NewReportService(reportRepo)
+	reportHandler := handlers.NewReportHandler(reportService)
+
 	http.HandleFunc("/api/product", productHandler.HandleProducts)
 	http.HandleFunc("/api/product/", productHandler.HandleProductByID)
 
@@ -138,6 +146,13 @@ func main() {
 	// Pola: /api/categories/{id} - contoh /api/categories/1
 	http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
 	http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
+
+	// Endpoint checkout transaksi
+	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
+
+	// Endpoint laporan transaksi
+	http.HandleFunc("/api/report/today", reportHandler.GetTodayReport)
+	http.HandleFunc("/api/report", reportHandler.GetReport)
 
 	// Endpoint health check - mengembalikan status dasar API
 	// Contoh: GET http://localhost:8080/health

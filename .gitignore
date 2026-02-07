@@ -3,3 +3,6 @@ kasir-api.exe
 *.log
 .env
 tmp/
+.cline
+.agents
+AGENTS.md

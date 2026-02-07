@@ -14,31 +14,46 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (repo *ProductRepository) GetAll() ([]models.Product, error) {
+func (repo *ProductRepository) GetAll(name string) ([]models.Product, error) {
+	args := []any{}
+
 	query := `
 		SELECT p.id, p.name, p.price, p.stock, c.name as category_name, c.description as category_description
 		FROM products p
 		LEFT JOIN categories c ON p.category_id = c.id
-		ORDER BY id ASC
 	`
-	rows, err := repo.db.Query(query)
+
+	if name != "" {
+		query += " WHERE p.name ILIKE $1"
+		args = append(args, "%"+name+"%")
+	}
+
+	query += " ORDER BY p.id ASC"
+
+	rows, err := repo.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	products := make([]models.Product, 0)
+	products := make([]models.Product, 0, 16)
 	for rows.Next() {
 		var p models.Product
 		var c models.Category
-		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &c.Name, &c.Description)
-		if err != nil {
+
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &c.Name, &c.Description); err != nil {
 			return nil, err
 		}
+
 		if c.Name != "" || c.Description != "" {
 			p.Category = &c
 		}
+
 		products = append(products, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return products, nil
